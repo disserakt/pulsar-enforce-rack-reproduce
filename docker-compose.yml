@@ -1,0 +1,209 @@
+version: '3.7'
+
+x-common-bookie: &bookie
+  # deploy:
+  #   resources:
+  #     limits:
+  #       cpus: '0.5'
+  #       memory: 1G
+  image: apachepulsar/pulsar:2.7.3
+  environment:
+      BOOKIE_CONF: /conf/bookkeeper.conf
+  command: /bin/bash "/scripts/start_otherbk.sh"
+  depends_on:
+    - bookie1
+  restart: on-failure
+
+services:
+  zoo1:
+    image: apachepulsar/pulsar:2.7.3
+    hostname: zoo1
+    ports:
+      - "2181:2181"
+    environment:
+        ZK_ID: 1
+        PULSAR_ZK_CONF: /conf/zookeeper.conf
+    volumes:
+      - ./zoo1/data:/pulsar/data/zookeeper/
+      - ./zoo1/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    command: /bin/bash "/scripts/start_zk.sh"
+
+  bookie1:
+    image: apachepulsar/pulsar:2.7.3
+    hostname: bookie1
+    ports:
+      - "3181:3181"
+    environment:
+        BOOKIE_CONF: /conf/bookkeeper.conf
+    volumes:
+      - ./bookie1/data:/pulsar/data/bookkeeper/
+      - ./bookie1/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    command: /bin/bash "/scripts/start_mainbk.sh"
+    depends_on:
+      - zoo1
+    restart: on-failure
+
+
+  bookie2:
+    hostname: bookie2
+    ports:
+      - "3182:3181"
+    volumes:
+      - ./bookie2/data:/pulsar/data/bookkeeper/
+      - ./bookie2/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  bookie3:
+    hostname: bookie3
+    ports:
+      - "3183:3181"
+    volumes:
+      - ./bookie3/data:/pulsar/data/bookkeeper/
+      - ./bookie3/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  bookie4:
+    hostname: bookie4
+    ports:
+      - "3184:3181"
+    volumes:
+      - ./bookie4/data:/pulsar/data/bookkeeper/
+      - ./bookie4/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  bookie5:
+    hostname: bookie5
+    ports:
+      - "3185:3181"
+    volumes:
+      - ./bookie5/data:/pulsar/data/bookkeeper/
+      - ./bookie5/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  bookie6:
+    hostname: bookie6
+    ports:
+      - "3186:3181"
+    volumes:
+      - ./bookie6/data:/pulsar/data/bookkeeper/
+      - ./bookie6/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  bookie7:
+    hostname: bookie7
+    ports:
+      - "3187:3181"
+    volumes:
+      - ./bookie7/data:/pulsar/data/bookkeeper/
+      - ./bookie7/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  bookie8:
+    hostname: bookie8
+    ports:
+      - "3188:3181"
+    volumes:
+      - ./bookie8/data:/pulsar/data/bookkeeper/
+      - ./bookie8/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  bookie9:
+    hostname: bookie9
+    ports:
+      - "3189:3181"
+    volumes:
+      - ./bookie9/data:/pulsar/data/bookkeeper/
+      - ./bookie9/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    <<: *bookie
+
+
+  broker1:
+    image: apachepulsar/pulsar:2.7.3
+    hostname: broker1
+    environment:
+        PULSAR_BROKER_CONF: /conf/broker.conf
+        PULSAR_LOG_ROOT_LEVEL: trace
+        PULSAR_LOG_LEVEL: trace
+    ports:
+      - "6660:6650"
+      - "8090:8080"
+    volumes:
+      - ./broker1/data:/pulsar/data/broker/
+      - ./broker1/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    command: /bin/bash "/scripts/start_broker.sh"
+    depends_on:
+      - bookie1
+      - bookie2
+      - bookie3
+      - bookie4
+      - bookie5
+      - bookie6
+      - bookie7
+      - bookie8
+      - bookie9
+
+  broker2:
+    image: apachepulsar/pulsar:2.7.3
+    hostname: broker2
+    environment:
+        PULSAR_BROKER_CONF: /conf/broker.conf
+        PULSAR_LOG_ROOT_LEVEL: trace
+        PULSAR_LOG_LEVEL: trace
+    ports:
+      - "6661:6650"
+      - "8091:8080"
+    volumes:
+      - ./broker2/data:/pulsar/data/broker/
+      - ./broker2/log/:/pulsar/logs
+      - ./conf:/conf
+      - ./scripts:/scripts
+    command: /bin/bash "/scripts/start_broker.sh"
+    depends_on:
+      - bookie1
+      - bookie2
+      - bookie3
+      - bookie4
+      - bookie5
+      - bookie6
+      - bookie7
+      - bookie8
+      - bookie9
+
+  client:
+    build:
+      context: ./pulsar-producer
+    environment:
+      QUEUE_COUNT: 20
+    depends_on:
+      - broker1
+      - broker2
+    restart: on-failure
